@@ -811,3 +811,6 @@ function showMovesPlayed () {
   //  document.getElementById('showMovesPlayed').innerHTML = numberOfValidMoves;
 
 }
+
+
+//comment
