@@ -1,0 +1,36 @@
+*{
+    color: rgb(187, 187, 187);
+    font-family: Courier New;
+    font-size: 1.1em;
+    text-align: center ;
+    background-color: rgb(40, 40, 59);
+}
+
+
+div {
+    display: flex;
+    margin: auto;
+    width:max-content;    
+}
+
+h1 {
+    height: 50px;
+    width: 50px;
+    margin: 0px;
+    border : 1px solid black;
+
+    background-position: center;
+    background-size: 50px 50px;
+}
+
+h2 {
+    background-color: rgb(52, 52, 71);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 5px;
+  
+}
+
+#spacer{
+    height: 0px;
+}
