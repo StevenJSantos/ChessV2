@@ -13,6 +13,10 @@ document.body.appendChild(startButton);
 
 function start() {
 
+let whiteLoosersRow = document.createElement('div'); 
+    whiteLoosersRow.id =  'loosersRowWhite';
+    document.getElementById('gameBoard').appendChild (whiteLoosersRow)
+
 for(let y = 7 ; y>=0 ; y--){
     let gameRows = document.createElement('div'); 
       gameRows.id =  y;
@@ -29,6 +33,9 @@ for(let y = 7 ; y>=0 ; y--){
     }
 }
 
+let BlackLoosersRow = document.createElement('div'); 
+    BlackLoosersRow.id =  'loosersRowBlack';
+    document.getElementById('gameBoard').appendChild (BlackLoosersRow)   
 
 let promotionRows = document.createElement('div'); 
     promotionRows.id =  'promotionRow';
@@ -38,25 +45,31 @@ let promotionRows = document.createElement('div');
     for(let x=0; x<4 ; x++){
         let promotionBox = document.createElement('h1');
             promotionBox.id =  x + 'promotionRow'; 
-            promotionBox.style.border = '5px' ;
+            promotionBox.style.border = '5px ' ;
             promotionBox.addEventListener('click',function () {
                 if(amIPromoting) { promotionElements(event.target.id)}});
              document.getElementById('promotionRow').appendChild (promotionBox);
     }
 
-let gameRows = document.createElement('div'); 
-    gameRows.id =  'loosersRow';
-    document.getElementById('gameBoard').appendChild (gameRows)
+    for (let i = 0 ; i<16;i++){
+        let WhiteLooserColumn = document.createElement('h1'); 
+            WhiteLooserColumn.id =  `wLooser${i}`;
+            WhiteLooserColumn.style.border = '5px ' ;
+            WhiteLooserColumn.style.height = '25px';
+            WhiteLooserColumn.style.width = '25px';
+            WhiteLooserColumn.style.backgroundSize = '25px 25px';
+            document.getElementById('loosersRowWhite').appendChild (WhiteLooserColumn);
+
+        let BlackLooserColumn = document.createElement('h1'); 
+            BlackLooserColumn.id =   `bLooser${i}`;
+            BlackLooserColumn.style.border = '5px ' ;
+            BlackLooserColumn.style.height = '25px';
+            BlackLooserColumn.style.width = '25px';
+            BlackLooserColumn.style.backgroundSize ='25px 25px';
+            document.getElementById('loosersRowBlack').appendChild (BlackLooserColumn);
+    }
 
 updateBoard();
-}
-
-
-function appendLostPiece(name){
-let LooserRow = document.createElement('h1'); 
-    LooserRow.id =  name;
-    LooserRow.style.border = '5px' ;
-    document.getElementById('loosersRow').appendChild (LooserRow);
 }
 
 
@@ -297,6 +310,7 @@ let checkMate = 'test';
 
 let movesPlayed = [[0,0,0,0]];
 let enPassant = "";
+let castles = false;
 
 let amIPromoting = false;
 let pieceGettingPromoted = "";
@@ -344,6 +358,8 @@ function selectedElement (location) {
         }
 }
 
+let whiteLostPieceCounter = 0 ;
+let blackLostPieceCounter = 0 ;
 
 function movePiece(targetLocation){
         //moves the piece
@@ -357,6 +373,26 @@ function movePiece(targetLocation){
             currentTurnPieces === whitePieces ? targetLocation = Number(targetLocation) -1 : targetLocation = Number(targetLocation) +1 ;
             enPassant = ""
         }
+        //check for castles
+        if(castles){
+            switch(targetLocation){
+                case '60':
+                    currentTurnPieces.changePieceLocation('70wrook','50');
+                    break;
+                case '20':
+                    currentTurnPieces.changePieceLocation('00wrook','30');
+                    break;
+                case '67':
+                    currentTurnPieces.changePieceLocation('77brook','57');
+                    break;
+                case '27':
+                    currentTurnPieces.changePieceLocation('07brook','37');
+                    break;
+                default:
+                    break;
+                }
+                castles = false;
+        }
 
         //check for promtion
         if ((targetLocation[1] == 7 || targetLocation[1] == 0 )&& selectedPiece== 'pawn'){
@@ -368,8 +404,8 @@ function movePiece(targetLocation){
 
         //removes taken piece
         if(opponetTurnPieces.isThereAPieceHere(targetLocation)){  
-            appendLostPiece("lost" + pieceNameAtLocation);
-            opponetTurnPieces.changePieceLocation(pieceNameAtLocation,"lost" + pieceNameAtLocation);
+            opponetTurnPieces.changePieceLocation(pieceNameAtLocation,`${pieceNameAtLocation[2]}Looser${pieceNameAtLocation[2]== 'w' ? whiteLostPieceCounter :blackLostPieceCounter}`);
+            pieceNameAtLocation[2]== 'w' ? whiteLostPieceCounter+=1 :blackLostPieceCounter+=1;
             movesPlayed[movesPlayed.length-1].push('taken', pieceNameAtLocation);
          } ;
 }
@@ -437,6 +473,36 @@ function convertPointsToMoves(testPoints){
 function  checkKingMove() {
     let testPoints= [[0,1],[0,-1],[1,0],[1,1],[1,-1],[-1,0],[-1,-1],[-1,1]]  
     convertPointsToMoves(testPoints);
+    
+    let kingHasNotMoved = true;
+    let rookLeftHasNotMoved = true;
+    let rookRightHasNotMoved = true;
+
+    let leftSpace = currentTurnPieces == whitePieces ? 20 : 27;
+    let rightSpace = currentTurnPieces == whitePieces ? 60 : 67;
+
+    let leftTravelSpaces = currentTurnPieces == whitePieces ? [10,20,30] : [17,27,37];
+    let rightTravelSpaces = currentTurnPieces == whitePieces ? [50,60] : [57,67];
+
+    movesPlayed.forEach(x => {
+       if( x.includes(selectedPieceName)) {kingHasNotMoved = false };
+       if (x.includes(currentTurnPieces== whitePieces ? '00wrook' : '07brook')) {rookLeftHasNotMoved = false} ;
+       if (x.includes(currentTurnPieces== whitePieces ? '70wrook' : '77brook')) {rookRightHasNotMoved = false} ;})
+    
+    leftTravelSpaces.forEach(x => {
+        if(currentTurnPieces.isThereAPieceHere(x)|| opponetTurnPieces.isThereAPieceHere(x) || opponetTurnPieces.isThisSquareBeingAttacked(""+x)){
+            leftTravelSpaces = false;
+        }
+    })
+
+    rightTravelSpaces.forEach(x => {
+        if(currentTurnPieces.isThereAPieceHere(x)|| opponetTurnPieces.isThereAPieceHere(x) || opponetTurnPieces.isThisSquareBeingAttacked(""+x)){
+            rightTravelSpaces = false;
+        }
+    })
+
+        if(!check && rookLeftHasNotMoved  && kingHasNotMoved && leftTravelSpaces !== false){makeSpaceAvailable("" + leftSpace) ; castles = true }
+        if(!check && rookRightHasNotMoved && kingHasNotMoved && rightTravelSpaces !== false){makeSpaceAvailable("" + rightSpace) ; castles = true}
 }
 
 
@@ -603,8 +669,8 @@ function calculateSlope(pieceType,color, pieceLocation,sqareInQuestion){
             } else if( opponetTurnPieces.isThereAPieceHere(testlocation)){ //do they have a piece between  the attacker and sqareInQuestion
                 opponetTurnPinList.push(pieceNameAtLocation);
 
-            }else {
-              if(!check){ blockingSquareLocation.push(testlocation); }//empty spuares between attacker and king are blocking squares
+            }else if (!check){
+                blockingSquareLocation.push(testlocation);//empty spuares between attacker and king are blocking squares
             } 
         }
     
@@ -678,6 +744,10 @@ function undo() {
 function restart (){
     testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","37bqueen","37","queen","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","36bpawn","36","pawn","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","41wpawn","41","pawn","51wpawn","51","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","50wbishop","50","bishop","60wknight","60","knight","70wrook","70","rook"]
     printThisGameState();
+    for(let i = 0 ; i<16;i++){
+        document.getElementById(`wLooser${i}`).style.backgroundImage = null;
+        document.getElementById(`bLooser${i}`).style.backgroundImage = null;
+    }
     currentTurnPieces = whitePieces;
     opponetTurnPieces = blackPieces;
     updateWhosTurn();
@@ -720,8 +790,27 @@ function generateGameState () {
                 gamePositions.push(pieceNameAtLocation);
                 gamePositions.push("" + x + y);
                 gamePositions.push(pieceAtLocation)
-               
              } 
+
+             if(currentTurnPieces.isThereAPieceHere(`bLooser${x + y}`) || opponetTurnPieces.isThereAPieceHere(`bLooser${x + y}`)){
+                gamePositionsPrint.push(`"${pieceNameAtLocation}"`);
+                gamePositionsPrint.push(`"bLooser${x + y}"`);
+                gamePositionsPrint.push(`"${pieceAtLocation}"`);
+    
+                gamePositions.push(pieceNameAtLocation);
+                gamePositions.push(`bLooser${x + y}`);
+                gamePositions.push(pieceAtLocation)
+             }
+
+             if(currentTurnPieces.isThereAPieceHere(`wLooser${x + y}`) || opponetTurnPieces.isThereAPieceHere(`wLooser${x + y}`)){
+                gamePositionsPrint.push(`"${pieceNameAtLocation}"`);
+                gamePositionsPrint.push(`"wLooser${x + y}"`);
+                gamePositionsPrint.push(`"${pieceAtLocation}"`);
+    
+                gamePositions.push(pieceNameAtLocation);
+                gamePositions.push(`wLooser${x + y}`);
+                gamePositions.push(pieceAtLocation)
+             }
         }
     }
 
@@ -732,7 +821,7 @@ function generateGameState () {
 
 
 //let testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","37bqueen","37","queen","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","36bpawn","36","pawn","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","41wpawn","41","pawn","51wpawn","51","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","50wbishop","50","bishop","60wknight","60","knight","70wrook","70","rook"]
-let testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","37bqueen","37","queen","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","47bking","36","king","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","30wqueen","05","queen","16bpawn","14","pawn","26bpawn","24","pawn","36bpawn","34","pawn","51wpawn","54","pawn","21wpawn","23","pawn","31wpawn","33","pawn","01wpawn","01","pawn","11wpawn","11","pawn","41wpawn","41","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","10wknight","10","knight","20wbishop","20","bishop","40wking","40","king","50wbishop","50","bishop","60wknight","60","knight","70wrook","70","rook"]
+let testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","36bpawn","34","pawn","37bqueen","23","queen","41wpawn","43","pawn","51wpawn","53","pawn","60wknight","52","knight","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","50wbishop","wLooser0","bishop","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","70wrook","70","rook"]
 
 
 function printThisGameState (){
