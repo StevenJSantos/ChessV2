@@ -25,8 +25,6 @@ for(let y = 7 ; y>=0 ; y--){
     for(let x=0; x<8 ; x++){
         let gameColumn = document.createElement('h1');
              gameColumn.id =  "" + x + y; 
-             gameColumn.innerHTML = gameColumn.id;
-             gameColumn.style.color = 'lime';
              gameColumn.addEventListener('click',function () {
               if(!amIPromoting) { selectedElement(event.target.id)}});
              document.getElementById(y).appendChild (gameColumn);
@@ -44,7 +42,7 @@ let promotionRows = document.createElement('div');
 
     for(let x=0; x<4 ; x++){
         let promotionBox = document.createElement('h1');
-            promotionBox.id =  x + 'promotionRow'; 
+            promotionBox.id =  x + 'promotionRow';
             promotionBox.style.border = '5px ' ;
             promotionBox.addEventListener('click',function () {
                 if(amIPromoting) { promotionElements(event.target.id)}});
@@ -84,7 +82,8 @@ function updateBoard(){
         document.getElementById("" + x + y).style.backgroundColor  = 'white';
         };
         document.getElementById("" + x + y).style.backgroundImage  = null;
-        }
+        document.getElementById("" + x + y).style.cursor  = 'default';
+    }
         blackPieces.printList();
         whitePieces.printList();
     }
@@ -92,9 +91,12 @@ function updateBoard(){
 
 function promotionBackGoundColor(){
     let color = 'gold';
+    let cursor = 'pointer';
     amIPromoting ? color = 'gold' : color = '';
+     amIPromoting ? cursor = 'pointer' : cursor = 'default';
     for(let i = 0 ; i<4 ; i ++){
         document.getElementById(i+'promotionRow').style.backgroundColor = color;
+         document.getElementById(i+'promotionRow').style.cursor = cursor;
     }
 }
 
@@ -139,6 +141,9 @@ class LinkedList {
 
         while(node !==null){
         document.getElementById(node.location).style.backgroundImage  = node.image;
+        if (node.location[1]!== 'L' && node.color == currentTurnPieces.head.color){
+            document.getElementById(node.location).style.cursor  = 'pointer';
+        }
         node = node.next;
         }
     }
@@ -306,7 +311,7 @@ let allAvailibleMoves = [];
 
 let pinnedPieces = [];
 let check = false;
-let checkMate = 'test';
+let checkMate = false;
 
 let movesPlayed = [[0,0,0,0]];
 let enPassant = "";
@@ -315,14 +320,13 @@ let castles = false;
 let amIPromoting = false;
 let pieceGettingPromoted = "";
 
-
+let whiteLostPieceCounter = 0 ;
+let blackLostPieceCounter = 0 ;
 
 function selectedElement (location) {
     if (currentTurnPieces.whichPieceSelected(location)){
         updateBoard();
         availibleMoves =[];
-
-        if(!pinnedPieces.includes(selectedPieceName)){   /// if the piece is not pinned calculate the moves it can make
         switch(selectedPiece){
             case 'pawn':
                 checkPawnMove();
@@ -345,21 +349,17 @@ function selectedElement (location) {
             default:
                 break;
             }
-        }
+
     } else if (  availibleMoves.includes(location)){
-       
          movePiece(location);
-         updateBoard();
             if(!amIPromoting){ 
                 toggleTurn(); 
                 testCheck(); // test to see if king is in check and generates a new list of pinned pieces
              } 
              availibleMoves = [];
+             updateBoard();
         }
 }
-
-let whiteLostPieceCounter = 0 ;
-let blackLostPieceCounter = 0 ;
 
 function movePiece(targetLocation){
         //moves the piece
@@ -419,26 +419,31 @@ function promotionElements(location){
     pieceGettingPromoted  = "";
     promotionBackGoundColor();
     opponetTurnPieces=== whitePieces ? whitePromotions.deleteList() : blackPromotions.deleteList();
-    updateBoard();
     toggleTurn();
+    updateBoard();
     testCheck();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
  /// check availible moves for each piece //////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
- 
 
  function makeSpaceAvailable(Location) {
-
+    if(pinnedPieces.includes(selectedPieceName) && (pieceAttackingPing == Location || blockingSquareLocation.includes(Location))){ /// if the piece is  pinned moves are limited
+        allowedToMove()
+    }else if(!pinnedPieces.includes(selectedPieceName)){//piece is not pinned
     if(!check || selectedPiece === 'king'){
-        document.getElementById(Location).style.backgroundColor = 'red'; 
-        availibleMoves.push(Location);
-        allAvailibleMoves.push(Location);
+        allowedToMove()
     } else if(attackingPieceLocation.length>1){
 
     }else if(blockingSquareLocation.includes(Location) || attackingPieceLocation.includes(Location)){
+        allowedToMove()
+        }
+    }
+
+    function allowedToMove(){
         document.getElementById(Location).style.backgroundColor = 'red'; 
+        document.getElementById(Location).style.cursor  = 'pointer';
         availibleMoves.push(Location);
         allAvailibleMoves.push(Location);
     }
@@ -620,6 +625,7 @@ function  checkPawnMove() {
  
 let attackingPieceLocation = []
 let blockingSquareLocation = []
+let pieceAttackingPing = "";
 
  //this calculates the slope and distance between a piece and a "sqareInQuestion" to determine if it is attacking that square
  //in the case of rook,bishop, and queen it also determines if it is pinning the piece to the king
@@ -664,7 +670,10 @@ function calculateSlope(pieceType,color, pieceLocation,sqareInQuestion){
         let testlocation ="" + (x1+run*i) + (y1+rise*i);
         
         if (currentTurnPieces.isThereAPieceHere(testlocation)){  //do you have a piece between  the attacker and sqareInQuestion
-            if(pieceAtLocation!=='king'){currentTurnPinList.push(pieceNameAtLocation);} //your own king cant block a pin,  with out the "if" the king can move in the same direction as attack
+            if(pieceAtLocation!=='king'){//your own king cant block a pin,  with out the "if" the king can move in the same direction as attack
+                currentTurnPinList.push(pieceNameAtLocation);
+                pieceAttackingPing = ""+ x1 + y1
+            } 
 
             } else if( opponetTurnPieces.isThereAPieceHere(testlocation)){ //do they have a piece between  the attacker and sqareInQuestion
                 opponetTurnPinList.push(pieceNameAtLocation);
@@ -692,6 +701,7 @@ function calculateSlope(pieceType,color, pieceLocation,sqareInQuestion){
 
 function testCheck(){
     pinnedPieces = [];
+    pieceAttackingPing= "";
     attackingPieceLocation = []
     blockingSquareLocation = []
     check =  opponetTurnPieces.isThisSquareBeingAttacked(currentTurnPieces.head.next.next.next.next.next.next.next.next.location) ? true : false;
@@ -703,47 +713,19 @@ function testCheck(){
 
     document.getElementById('test').innerHTML = `check: ${check}`;
     document.getElementById('test2').innerHTML = `checkMate: ${checkMate}`;
+
+    if (checkMate){
+        gameOver();
+    }
 }
 
 
-
-
-
-
-function undo() {
-    let previousMove = movesPlayed[movesPlayed.length -1]
-
-    opponetTurnPieces.changePieceLocation(previousMove[1],previousMove[2])
-
-    if (previousMove[4] === 'taken'){ 
-        currentTurnPieces.changePieceLocation(previousMove[5],previousMove[3])
-        document.getElementById(previousMove[5]).parentNode.removeChild(document.getElementById(previousMove[5]));
-    }
-
-    if (previousMove[4] === 'promotion'){ 
-        opponetTurnPieces.changePiece(previousMove[1],previousMove[0])
-    } 
-
-    if ( previousMove[4] === 'promotion'  && previousMove.length === 6){ 
-        currentTurnPieces.changePieceLocation(previousMove[5],previousMove[3])
-        document.getElementById(previousMove[5]).parentNode.removeChild(document.getElementById(previousMove[5]));
-    }
-
-    movesPlayed.pop();
-    if (movesPlayed.length === 0){
-         movesPlayed = [[0,0,0,0]]
-         toggleTurn();
-        };
-
-    document.getElementById('test').innerHTML= movesPlayed;
-
-    updateBoard();
-    toggleTurn();
-}
 
 function restart (){
     testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","37bqueen","37","queen","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","36bpawn","36","pawn","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","41wpawn","41","pawn","51wpawn","51","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","50wbishop","50","bishop","60wknight","60","knight","70wrook","70","rook"]
     printThisGameState();
+    check = false;
+    checkMate = false;
     for(let i = 0 ; i<16;i++){
         document.getElementById(`wLooser${i}`).style.backgroundImage = null;
         document.getElementById(`bLooser${i}`).style.backgroundImage = null;
@@ -821,7 +803,7 @@ function generateGameState () {
 
 
 //let testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","37bqueen","37","queen","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","36bpawn","36","pawn","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","41wpawn","41","pawn","51wpawn","51","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","50wbishop","50","bishop","60wknight","60","knight","70wrook","70","rook"]
-let testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","36bpawn","34","pawn","37bqueen","23","queen","41wpawn","43","pawn","51wpawn","53","pawn","60wknight","52","knight","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","50wbishop","wLooser0","bishop","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","70wrook","70","rook"]
+let testGamePositions = ["07brook","07","rook","17bknight","17","knight","27bbishop","27","bishop","47bking","47","king","57bbishop","57","bishop","67bknight","67","knight","77brook","77","rook","06bpawn","06","pawn","16bpawn","16","pawn","26bpawn","26","pawn","37bqueen","36","queen","46bpawn","46","pawn","56bpawn","56","pawn","66bpawn","66","pawn","76bpawn","76","pawn","36bpawn","34","pawn","41wpawn","43","pawn","50wbishop","32","bishop","01wpawn","01","pawn","11wpawn","11","pawn","21wpawn","21","pawn","31wpawn","31","pawn","51wpawn","51","pawn","61wpawn","61","pawn","71wpawn","71","pawn","00wrook","00","rook","10wknight","10","knight","20wbishop","20","bishop","30wqueen","30","queen","40wking","40","king","60wknight","60","knight","70wrook","70","rook"]
 
 
 function printThisGameState (){
@@ -842,6 +824,8 @@ function allowAllMoves ()  {
 }
 
 
-
-
-
+function gameOver(){
+    document.getElementById('test').innerHTML = "GAME OVER"
+    document.getElementById('test2').innerHTML = "GAME OVER"
+    document.getElementById('turn').innerHTML = "GAME OVER"
+}

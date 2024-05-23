@@ -6,7 +6,9 @@
     background-color: rgb(40, 40, 59);
 }
 
-
+button:hover{
+    background-color: rgb(92, 92, 134);
+}
 div {
     display: flex;
     margin: auto;
@@ -22,6 +24,13 @@ h1 {
     background-position: center;
     background-size: 50px 50px;
 }
+
+h1:hover{
+    border: 1px solid gold;
+    background-size: 60px 60px;
+    opacity: 0.90;
+}
+
 
 h2 {
     background-color: rgb(52, 52, 71);
