@@ -23,6 +23,7 @@ for(let y = 7 ; y>=0 ; y--){
       document.getElementById('gameBoard').appendChild (gameRows)
         
     for(let x=0; x<8 ; x++){
+        let columnLabel = ['1','b','c','d','e','f','g','h']
         let gameColumn = document.createElement('h1');
              gameColumn.id =  "" + x + y; 
              gameColumn.addEventListener('click',function () {
@@ -242,6 +243,10 @@ class LinkedList {
 let whitePieces = new LinkedList();
 let blackPieces = new LinkedList();
 
+let blackPromotions = new LinkedList();
+let whitePromotions = new LinkedList();
+
+
 
 for(let x = 0; x<8; x++){
 let pieceSetUp = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
@@ -250,22 +255,12 @@ let pieceSetUp = ['rook','knight','bishop','queen','king','bishop','knight','roo
     whitePieces.appendNode(new piece(x,1,'w', 'pawn'))
     blackPieces.appendNode(new piece(x,7,'b', pieceSetUp[x]))
     blackPieces.appendNode(new piece(x,6,'b', 'pawn'))
+
+if (x<4){
+    whitePromotions.appendNode(new piece(x,'promotionRow','w', pieceSetUp[x]))
+    blackPromotions.appendNode(new piece(x,'promotionRow','b', pieceSetUp[x]))
+    }
 }
-
-
-
-let blackPromotions = new LinkedList();
-let whitePromotions = new LinkedList();
-
-
-for(let x = 0; x<4; x++){
-let pieceSetUp = ['rook','knight','bishop','queen'];
-
-whitePromotions.appendNode(new piece(x,'promotionRow','w', pieceSetUp[x]))
-blackPromotions.appendNode(new piece(x,'promotionRow','b', pieceSetUp[x]))
-}
-
-
 
 
 /////////////////////////////////////////////////////////////////////
@@ -429,7 +424,7 @@ function promotionElements(location){
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
  function makeSpaceAvailable(Location) {
-    if(pinnedPieces.includes(selectedPieceName) && (pieceAttackingPing == Location || blockingSquareLocation.includes(Location))){ /// if the piece is  pinned moves are limited
+    if(pinnedPieces.includes(selectedPieceName) && (pieceAttackingPin == Location || blockingSquareLocation.includes(Location))){ /// if the piece is  pinned moves are limited
         allowedToMove()
     }else if(!pinnedPieces.includes(selectedPieceName)){//piece is not pinned
     if(!check || selectedPiece === 'king'){
@@ -449,7 +444,7 @@ function promotionElements(location){
     }
  }
 
-//takes an array of points [x,y] relative to the selected piece and makes the background red
+//takes an array of points [x,y] relative to the selected piece and runs the  makespaceavailbe algo.
 function convertPointsToMoves(testPoints){
     let testLocations = [];
 
@@ -625,7 +620,7 @@ function  checkPawnMove() {
  
 let attackingPieceLocation = []
 let blockingSquareLocation = []
-let pieceAttackingPing = "";
+let pieceAttackingPin = "";
 
  //this calculates the slope and distance between a piece and a "sqareInQuestion" to determine if it is attacking that square
  //in the case of rook,bishop, and queen it also determines if it is pinning the piece to the king
@@ -672,7 +667,7 @@ function calculateSlope(pieceType,color, pieceLocation,sqareInQuestion){
         if (currentTurnPieces.isThereAPieceHere(testlocation)){  //do you have a piece between  the attacker and sqareInQuestion
             if(pieceAtLocation!=='king'){//your own king cant block a pin,  with out the "if" the king can move in the same direction as attack
                 currentTurnPinList.push(pieceNameAtLocation);
-                pieceAttackingPing = ""+ x1 + y1
+                pieceAttackingPin = ""+ x1 + y1
             } 
 
             } else if( opponetTurnPieces.isThereAPieceHere(testlocation)){ //do they have a piece between  the attacker and sqareInQuestion
@@ -701,7 +696,7 @@ function calculateSlope(pieceType,color, pieceLocation,sqareInQuestion){
 
 function testCheck(){
     pinnedPieces = [];
-    pieceAttackingPing= "";
+    pieceAttackingPin= "";
     attackingPieceLocation = []
     blockingSquareLocation = []
     check =  opponetTurnPieces.isThisSquareBeingAttacked(currentTurnPieces.head.next.next.next.next.next.next.next.next.location) ? true : false;
@@ -737,24 +732,9 @@ function restart (){
 
 
 
-
-
-
-//////// testing pices ///////////////
-/*
-whitePieces.appendNode(new piece(3,3,'w','king'));
-blackPieces.appendNode(new piece(3,2,'b','king'));
-
-
-whitePieces.appendNode(new piece(4,2,'w','queen'));
-
-whitePieces.appendNode(new piece(6,2,'w','bishop'));
-blackPieces.appendNode(new piece(2,3,'b','bishop'));
-
-updateBoard();
-*/
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////below here are functions that i made while i coded to allow for easy debugging/////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function generateGameState () {
     let gamePositions = [];
